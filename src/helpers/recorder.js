@@ -65,15 +65,24 @@ const RTSPRecorder = class {
   }
 
   getChildProcess(fileName) {
-    var args = ['-i', this.url]
+    var args = ['ffmpeg', '-rtsp_transport', 'tcp', '-i', this.url]
     const mediaArgs = this.getArguments()
     mediaArgs.forEach((item) => {
       args.push(item)
-    })
+    });
     args.push(fileName)
-    return childProcess.spawn('ffmpeg',
-      args,
-      { detached: false, stdio: 'ignore' })
+    return childProcess.exec(args.join(' '), function (err, stdout, stderr) { })
+
+
+    // var args = ['-i', this.url]
+    // const mediaArgs = this.getArguments()
+    // mediaArgs.forEach((item) => {
+    //   args.push(item)
+    // })
+    // args.push(fileName)
+    // return childProcess.spawn('ffmpeg',
+    //   args,
+    //   { detached: false, stdio: 'ignore' })
   }
 
   stopRecording() {
@@ -109,7 +118,11 @@ const RTSPRecorder = class {
   }
 
   killStream() {
-    this.writeStream.kill()
+    this.writeStream.stdin.write('q');
+    // setTimeout(() => {
+    this.writeStream.kill();
+    // }, 20000)
+    //this.writeStream.kill()
   }
 
   recordStream() {
@@ -134,21 +147,26 @@ const RTSPRecorder = class {
       return false
     }
 
-    this.writeStream = null
+    this.writeStream = null;
     const folderPath = this.getMediaTypePath()
-    fh.createDirIfNotExists(folderPath)
-    const fileName = this.getFilename(folderPath)
-    this.writeStream = this.getChildProcess(fileName)
+    try {
+      console.log("folderPath: "+ folderPath);
+      fh.createDirIfNotExists(folderPath)
+      const fileName = this.getFilename(folderPath)
+      this.writeStream = this.getChildProcess(fileName)
 
-    this.writeStream.once('exit', () => {
-      if (self.disableStreaming) {
-        return true
-      }
-      self.recordStream()
-    })
-    this.timer = setTimeout(self.killStream.bind(this), this.timeLimit * 1000)
+      this.writeStream.once('exit', () => {
+        if (self.disableStreaming) {
+          return true
+        }
+        self.recordStream()
+      })
+      this.timer = setTimeout(self.killStream.bind(this), this.timeLimit * 1000)
 
-    console.log('Start record ' + fileName)
+      console.log('Start record ' + fileName)
+    } catch (e) {
+      console.log('Start record ERROR ', e)
+    }
   }
 }
 
