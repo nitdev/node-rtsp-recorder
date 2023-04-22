@@ -68,24 +68,23 @@ const RTSPRecorder = class {
   }
 
   getChildProcess(fileName) {
-    var args = ['ffmpeg', '-rtsp_transport', 'tcp', '-i', this.url]
-    const mediaArgs = this.getArguments();
-    mediaArgs.forEach((item) => {
-      args.push(item)
-    });
-    args.push(fileName)
-    return childProcess.exec(args.join(' '), function (err, stdout, stderr) { })
-
-
-    // var args = ['-i', this.url]
-    // const mediaArgs = this.getArguments()
+    // var args = ['ffmpeg', '-rtsp_transport', 'tcp', '-i', this.url]
+    // const mediaArgs = this.getArguments();
     // mediaArgs.forEach((item) => {
     //   args.push(item)
-    // })
+    // });
     // args.push(fileName)
-    // return childProcess.spawn('ffmpeg',
-    //   args,
-    //   { detached: false, stdio: 'ignore' })
+    // return childProcess.exec(args.join(' '), function (err, stdout, stderr) { })
+
+    var args = ['-i', this.url]
+    const mediaArgs = this.getArguments()
+    mediaArgs.forEach((item) => {
+      args.push(item)
+    })
+    args.push(fileName)
+    return childProcess.spawn('ffmpeg',
+      args,
+      { detached: false, stdio: 'ignore' })
   }
 
   stopRecording() {
