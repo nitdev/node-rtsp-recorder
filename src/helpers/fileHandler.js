@@ -1,15 +1,17 @@
 const fs = require('fs')
 const rimraf = require('rimraf')
 const du = require('du')
+const { mkdirp } = require('mkdirp')
 
 const FileHandler = class {
   createDirIfNotExists(folderPath) {
     try {
       if (!fs.lstatSync(folderPath).isDirectory()) {
-        fs.mkdirSync(folderPath)
+        fs.mkdirSync(folderPath, { recursive: true })
       }
     } catch (e) {
-      fs.mkdirSync(folderPath)
+      mkdirp.sync(folderPath);
+      // fs.mkdirSync(folderPath, { recursive: true })
     }
   }
 

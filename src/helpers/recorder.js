@@ -23,6 +23,9 @@ const RTSPRecorder = class {
     this.directoryPathFormat = config.directoryPathFormat || 'MMM-Do-YY'
     this.fileNameFormat = config.fileNameFormat || 'YYYY-M-D-h-mm-ss'
     this.audioCodec = config.audioCodec || 'copy'
+    this.videoCodec = config.videoCodec || 'copy'
+    this.more = config.more || ''
+
     fh.createDirIfNotExists(this.getDirectoryPath())
     fh.createDirIfNotExists(this.getTodayPath())
   }
@@ -61,12 +64,12 @@ const RTSPRecorder = class {
     if (this.categoryType === 'image') {
       return ['-vframes', '1']
     }
-    return ['-acodec', this.audioCodec, '-vcodec', 'copy']
+    return ['-acodec', this.audioCodec, '-vcodec', this.videoCodec, this.more]
   }
 
   getChildProcess(fileName) {
     var args = ['ffmpeg', '-rtsp_transport', 'tcp', '-i', this.url]
-    const mediaArgs = this.getArguments()
+    const mediaArgs = this.getArguments();
     mediaArgs.forEach((item) => {
       args.push(item)
     });
@@ -118,9 +121,18 @@ const RTSPRecorder = class {
   }
 
   killStream() {
-    this.writeStream.stdin.write('q');
+    try {
+      this.writeStream.stdin.write('q');
+    } catch (e) {
+
+    }
+
     // setTimeout(() => {
-    this.writeStream.kill();
+    try {
+      this.writeStream.kill();
+    } catch (e) {
+
+    }
     // }, 20000)
     //this.writeStream.kill()
   }
@@ -150,7 +162,6 @@ const RTSPRecorder = class {
     this.writeStream = null;
     const folderPath = this.getMediaTypePath()
     try {
-      console.log("folderPath: "+ folderPath);
       fh.createDirIfNotExists(folderPath)
       const fileName = this.getFilename(folderPath)
       this.writeStream = this.getChildProcess(fileName)
@@ -162,8 +173,6 @@ const RTSPRecorder = class {
         self.recordStream()
       })
       this.timer = setTimeout(self.killStream.bind(this), this.timeLimit * 1000)
-
-      console.log('Start record ' + fileName)
     } catch (e) {
       console.log('Start record ERROR ', e)
     }
