@@ -68,23 +68,23 @@ const RTSPRecorder = class {
   }
 
   getChildProcess(fileName) {
-    // var args = ['ffmpeg', '-rtsp_transport', 'tcp', '-i', this.url]
-    // const mediaArgs = this.getArguments();
-    // mediaArgs.forEach((item) => {
-    //   args.push(item)
-    // });
-    // args.push(fileName)
-    // return childProcess.exec(args.join(' '), function (err, stdout, stderr) { })
-
-    var args = ['-i', this.url]
-    const mediaArgs = this.getArguments()
+    var args = ['ffmpeg', '-rtsp_transport', 'tcp', '-i', this.url]
+    const mediaArgs = this.getArguments();
     mediaArgs.forEach((item) => {
       args.push(item)
-    })
+    });
     args.push(fileName)
-    return childProcess.spawn('ffmpeg',
-      args,
-      { detached: false, stdio: 'ignore' })
+    return childProcess.exec(args.join(' '), function (err, stdout, stderr) { })
+
+    // var args = ['-rtsp_transport', 'tcp', '-i', this.url]
+    // const mediaArgs = this.getArguments()
+    // mediaArgs.forEach((item) => {
+    //   args.push(item)
+    // })
+    // args.push(fileName)
+    // return childProcess.spawn('ffmpeg',
+    //   args,
+    //   { detached: false, stdio: 'ignore' })
   }
 
   stopRecording() {
@@ -170,7 +170,16 @@ const RTSPRecorder = class {
           return true
         }
         self.recordStream()
-      })
+      });
+
+      // this.writeStream.stdout.on('error', function (err) {
+      //   console.log("err.code: " + err.code);
+      //   if (err.code == "EPIPE") {
+      //     process.exit(0);
+      //   }
+      // });
+
+
       this.timer = setTimeout(self.killStream.bind(this), this.timeLimit * 1000)
     } catch (e) {
       console.log('Start record ERROR ', e)
