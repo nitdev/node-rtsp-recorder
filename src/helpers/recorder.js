@@ -69,6 +69,16 @@ const RTSPRecorder = class {
     return ['-acodec', this.audioCodec, '-vcodec', this.videoCodec, this.more]
   }
 
+  getCommand(fileName) {
+    var args = ['ffmpeg', '-rtsp_transport', 'tcp', '-i', this.url]
+    const mediaArgs = this.getArguments();
+    mediaArgs.forEach((item) => {
+      args.push(item)
+    });
+    args.push(fileName)
+    return args.join(' ');
+  }
+
   getChildProcess(fileName, callback) {
     var args = ['ffmpeg', '-rtsp_transport', 'tcp', '-i', this.url]
     const mediaArgs = this.getArguments();
@@ -76,7 +86,7 @@ const RTSPRecorder = class {
       args.push(item)
     });
     args.push(fileName)
-    return childProcess.exec(args.join(' '), callback)
+    return childProcess.exec(this.getCommand(fileName), callback)
 
     // var args = ['-rtsp_transport', 'tcp', '-i', this.url]
     // const mediaArgs = this.getArguments()
@@ -178,7 +188,8 @@ const RTSPRecorder = class {
     if (this.writeStream && this.writeStream.connected) {
       this.writeStream.binded = true
       this.writeStream.once('exit', () => {
-        if (this.log) console.log("Error exit");
+        // if (this.log) 
+        console.error("Error exit > " + this.name);
         this.handleError(repeat)
       })
       this.killStream()
@@ -191,11 +202,12 @@ const RTSPRecorder = class {
       fh.createDirIfNotExists(folderPath)
       const fileName = this.getFilename(folderPath)
       this.writeStream = this.getChildProcess(fileName, (err, stdout, stderr) => {
-        if (this.log) {
-          if (err) console.log("err::::: ", err);
-          if (stdout) console.log("stdout:::::", stdout);
-          if (stderr) console.log("stderr:::::", stderr);
-        }
+        // if (err) {
+        //   console.log("camera id " + this.name);
+        //   console.log("err::::: ", err);
+        // }
+        // if (stdout) console.log("stdout:::::", stdout);
+        // if (stderr) console.log("stderr:::::", stderr);
 
         // if (err) {
         //   self.handleError(repeat)
@@ -203,10 +215,9 @@ const RTSPRecorder = class {
       })
 
       this.writeStream.once('exit', () => {
-        if (this.log) {
-          console.log("Error exit 2");
-          console.log("===============");
-        }
+        // if (this.log) {
+        if (repeat != 0) console.error("Error exit 219 > " + this.getCommand(fileName));
+        // }
         this.handleError(repeat);
         // if (self.disableStreaming) {
         //   return true
@@ -222,7 +233,10 @@ const RTSPRecorder = class {
       });
 
 
-      this.timer = setTimeout(self.killStream.bind(this), this.timeLimit * 1000)
+      this.timer = setTimeout(() => {
+        repeat = 0;
+        this.killStream();
+      }, this.timeLimit * 1000)
     } catch (e) {
       console.log('Start record ERROR ', e)
     }

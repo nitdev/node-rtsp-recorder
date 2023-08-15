@@ -1,6 +1,6 @@
 {
   "name": "nv-node-rtsp-recorder",
-  "version": "1.3.6",
+  "version": "1.4.5",
   "description": "RTSP Stream Recorder",
   "main": "src/index.js",
   "scripts": {
