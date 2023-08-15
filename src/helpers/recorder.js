@@ -25,6 +25,8 @@ const RTSPRecorder = class {
     this.videoCodec = config.videoCodec || 'copy'
     this.more = config.more || ''
     this.errorCallback = config.errorCallback || function () { }
+    this.log = config.log || false;
+
 
     fh.createDirIfNotExists(this.getDirectoryPath())
     fh.createDirIfNotExists(this.getTodayPath())
@@ -146,8 +148,16 @@ const RTSPRecorder = class {
     if (this.disableStreaming) return true;
     if (repeat >= 3) {
       // Xử lý lỗi
+      if (this.writeStream) {
+        this.killStream()
+      }
+
       this.errorCallback(this.name);
     } else {
+      if (this.writeStream) {
+        this.killStream()
+      }
+
       this.recordStream(repeat + 1)
     }
   }
@@ -168,6 +178,7 @@ const RTSPRecorder = class {
     if (this.writeStream && this.writeStream.connected) {
       this.writeStream.binded = true
       this.writeStream.once('exit', () => {
+        if (this.log) console.log("Error exit");
         this.handleError(repeat)
       })
       this.killStream()
@@ -179,17 +190,23 @@ const RTSPRecorder = class {
     try {
       fh.createDirIfNotExists(folderPath)
       const fileName = this.getFilename(folderPath)
-      this.writeStream = this.getChildProcess(fileName, function (err, stdout, stderr) {
-        // console.log("err", err);
-        // console.log("stdout", stdout);
-        // console.log("stderr", stderr);
-        // console.log("===============");
+      this.writeStream = this.getChildProcess(fileName, (err, stdout, stderr) => {
+        if (this.log) {
+          if (err) console.log("err::::: ", err);
+          if (stdout) console.log("stdout:::::", stdout);
+          if (stderr) console.log("stderr:::::", stderr);
+        }
+
         // if (err) {
         //   self.handleError(repeat)
         // }
       })
 
       this.writeStream.once('exit', () => {
+        if (this.log) {
+          console.log("Error exit 2");
+          console.log("===============");
+        }
         this.handleError(repeat);
         // if (self.disableStreaming) {
         //   return true
