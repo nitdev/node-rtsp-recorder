@@ -74,7 +74,6 @@ const RTSPRecorder = class {
       args.push(item)
     });
     args.push(fileName)
-    console.log('.')
     return childProcess.exec(args.join(' '), callback)
 
     // var args = ['-rtsp_transport', 'tcp', '-i', this.url]
@@ -145,7 +144,6 @@ const RTSPRecorder = class {
 
   handleError(repeat) {
     if (this.disableStreaming) return true;
-    console.log("vao day nha: " + repeat);
     if (repeat >= 3) {
       // Xử lý lỗi
       this.errorCallback(this.name);
