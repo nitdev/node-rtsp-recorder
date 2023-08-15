@@ -9,7 +9,6 @@ const moment = require('moment')
 const childProcess = require('child_process')
 const path = require('path')
 const FileHandler = require('./fileHandler')
-
 const fh = new FileHandler()
 
 const RTSPRecorder = class {
@@ -25,6 +24,7 @@ const RTSPRecorder = class {
     this.audioCodec = config.audioCodec || 'copy'
     this.videoCodec = config.videoCodec || 'copy'
     this.more = config.more || ''
+    this.errorCallback = config.errorCallback || function () { }
 
     fh.createDirIfNotExists(this.getDirectoryPath())
     fh.createDirIfNotExists(this.getTodayPath())
@@ -67,14 +67,15 @@ const RTSPRecorder = class {
     return ['-acodec', this.audioCodec, '-vcodec', this.videoCodec, this.more]
   }
 
-  getChildProcess(fileName) {
+  getChildProcess(fileName, callback) {
     var args = ['ffmpeg', '-rtsp_transport', 'tcp', '-i', this.url]
     const mediaArgs = this.getArguments();
     mediaArgs.forEach((item) => {
       args.push(item)
     });
     args.push(fileName)
-    return childProcess.exec(args.join(' '), function (err, stdout, stderr) { })
+    console.log('.')
+    return childProcess.exec(args.join(' '), callback)
 
     // var args = ['-rtsp_transport', 'tcp', '-i', this.url]
     // const mediaArgs = this.getArguments()
@@ -103,7 +104,7 @@ const RTSPRecorder = class {
       console.log('URL Not Found.')
       return true
     }
-    this.recordStream()
+    this.recordStream(1)
   }
 
   captureImage(cb) {
@@ -111,7 +112,13 @@ const RTSPRecorder = class {
     const folderPath = this.getMediaTypePath()
     fh.createDirIfNotExists(folderPath)
     const fileName = this.getFilename(folderPath)
-    this.writeStream = this.getChildProcess(fileName)
+    this.writeStream = this.getChildProcess(fileName, function (err, stdout, stderr) {
+      // console.log("err", err);
+      // console.log("stdout", stdout);
+      // console.log("stderr", stderr);
+      // console.log("===============");
+
+    })
     this.writeStream.once('exit', () => {
       if (cb) {
         cb()
@@ -136,7 +143,18 @@ const RTSPRecorder = class {
     //this.writeStream.kill()
   }
 
-  recordStream() {
+  handleError(repeat) {
+    if (this.disableStreaming) return true;
+    console.log("vao day nha: " + repeat);
+    if (repeat >= 3) {
+      // Xử lý lỗi
+      this.errorCallback(this.name);
+    } else {
+      this.recordStream(repeat + 1)
+    }
+  }
+
+  recordStream(repeat = 1) {
     if (this.categoryType === 'image') {
       return
     }
@@ -152,7 +170,7 @@ const RTSPRecorder = class {
     if (this.writeStream && this.writeStream.connected) {
       this.writeStream.binded = true
       this.writeStream.once('exit', () => {
-        self.recordStream()
+        this.handleError(repeat)
       })
       this.killStream()
       return false
@@ -163,21 +181,30 @@ const RTSPRecorder = class {
     try {
       fh.createDirIfNotExists(folderPath)
       const fileName = this.getFilename(folderPath)
-      this.writeStream = this.getChildProcess(fileName)
+      this.writeStream = this.getChildProcess(fileName, function (err, stdout, stderr) {
+        // console.log("err", err);
+        // console.log("stdout", stdout);
+        // console.log("stderr", stderr);
+        // console.log("===============");
+        // if (err) {
+        //   self.handleError(repeat)
+        // }
+      })
 
       this.writeStream.once('exit', () => {
-        if (self.disableStreaming) {
-          return true
-        }
-        self.recordStream()
+        this.handleError(repeat);
+        // if (self.disableStreaming) {
+        //   return true
+        // }
+        // self.recordStream(repeat + 1)
       });
 
-      // this.writeStream.stdout.on('error', function (err) {
-      //   console.log("err.code: " + err.code);
-      //   if (err.code == "EPIPE") {
-      //     process.exit(0);
-      //   }
-      // });
+      this.writeStream.stdout.on('error', function (err) {
+        console.log("err.code: " + err.code);
+        if (err.code == "EPIPE") {
+          process.exit(0);
+        }
+      });
 
 
       this.timer = setTimeout(self.killStream.bind(this), this.timeLimit * 1000)
