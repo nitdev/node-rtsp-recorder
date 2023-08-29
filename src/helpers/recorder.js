@@ -26,6 +26,7 @@ const RTSPRecorder = class {
     this.more = config.more || ''
     this.errorCallback = config.errorCallback || function () { }
     this.log = config.log || false;
+    this.callbackData = config.callbackData || {};
 
 
     fh.createDirIfNotExists(this.getDirectoryPath())
@@ -41,7 +42,8 @@ const RTSPRecorder = class {
   }
 
   getMediaTypePath() {
-    return path.join(this.getTodayPath(), this.categoryType)
+    return path.join(this.getTodayPath());
+    // return path.join(this.getTodayPath(), this.categoryType)
   }
 
   getFilename(folderPath) {
@@ -162,7 +164,7 @@ const RTSPRecorder = class {
         this.killStream()
       }
 
-      this.errorCallback(this.name);
+      this.errorCallback(this.callbackData);
     } else {
       if (this.writeStream) {
         this.killStream()
@@ -189,7 +191,7 @@ const RTSPRecorder = class {
       this.writeStream.binded = true
       this.writeStream.once('exit', () => {
         // if (this.log) 
-        console.error("Error exit > " + this.name);
+        // console.error("Error exit > " + this.name);
         this.handleError(repeat)
       })
       this.killStream()
@@ -216,7 +218,7 @@ const RTSPRecorder = class {
 
       this.writeStream.once('exit', () => {
         // if (this.log) {
-        if (repeat != 0) console.error("Error exit 219 > " + this.getCommand(fileName));
+        // if (repeat != 0) console.error("Error exit 219 > " + this.getCommand(fileName));
         // }
         this.handleError(repeat);
         // if (self.disableStreaming) {
@@ -226,7 +228,7 @@ const RTSPRecorder = class {
       });
 
       this.writeStream.stdout.on('error', function (err) {
-        console.log("err.code: " + err.code);
+        // console.log("err.code: " + err.code);
         if (err.code == "EPIPE") {
           process.exit(0);
         }
