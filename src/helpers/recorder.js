@@ -16,6 +16,7 @@ const RTSPRecorder = class {
     this.config = config
     this.name = config.name
     this.url = config.url
+    this.timeout = config.timeout
     this.timeLimit = config.timeLimit || 60
     this.folder = config.folder || 'media/'
     this.categoryType = config.type || 'video'
@@ -27,7 +28,6 @@ const RTSPRecorder = class {
     this.errorCallback = config.errorCallback || function () { }
     this.log = config.log || false;
     this.callbackData = config.callbackData || {};
-
 
     fh.createDirIfNotExists(this.getDirectoryPath())
     fh.createDirIfNotExists(this.getTodayPath())
@@ -72,7 +72,7 @@ const RTSPRecorder = class {
   }
 
   getCommand(fileName) {
-    var args = ['ffmpeg', '-rtsp_transport', 'tcp', '-i', this.url]
+    var args = ['ffmpeg', '-rtsp_transport', 'tcp', '-stimeout', this.timeout || 15000000, '-i', this.url]
     const mediaArgs = this.getArguments();
     mediaArgs.forEach((item) => {
       args.push(item)
@@ -82,7 +82,7 @@ const RTSPRecorder = class {
   }
 
   getChildProcess(fileName, callback) {
-    var args = ['ffmpeg', '-rtsp_transport', 'tcp', '-i', this.url]
+    var args = ['ffmpeg', '-rtsp_transport', 'tcp', '-stimeout', this.timeout || 15000000, '-i', this.url]
     const mediaArgs = this.getArguments();
     mediaArgs.forEach((item) => {
       args.push(item)
@@ -152,6 +152,7 @@ const RTSPRecorder = class {
     } catch (e) {
 
     }
+    this.writeStream = null;
     // }, 20000)
     //this.writeStream.kill()
   }
