@@ -4,12 +4,13 @@
 //
 //  Created by Sahil Chaddha on 24/08/2018.
 //
-
+const fs = require('fs')
 const moment = require('moment')
 const childProcess = require('child_process')
 const path = require('path')
 const FileHandler = require('./fileHandler')
 const fh = new FileHandler()
+const mkdirp = require('mkdirp');
 
 const RTSPRecorder = class {
   constructor(config = {}) {
@@ -26,6 +27,8 @@ const RTSPRecorder = class {
     this.videoCodec = config.videoCodec || 'copy'
     this.more = config.more || ''
     this.errorCallback = config.errorCallback || function () { }
+    this.getDiskUse = config.getDiskUse || function () {
+    }
     this.log = config.log || false;
     this.callbackData = config.callbackData || {};
 
@@ -34,7 +37,8 @@ const RTSPRecorder = class {
   }
 
   getDirectoryPath() {
-    return path.join(this.folder, (this.name ? this.name : ''))
+    let disk = this.getDiskUse();
+    return path.join(disk, this.folder, (this.name ? this.name : ''))
   }
 
   getTodayPath() {
@@ -200,8 +204,12 @@ const RTSPRecorder = class {
     }
 
     this.writeStream = null;
-    const folderPath = this.getMediaTypePath()
+    const folderPath = this.getMediaTypePath();
     try {
+      if (!fs.existsSync(folderPath)) {
+        mkdirp.sync(folderPath);
+      }
+
       fh.createDirIfNotExists(folderPath)
       const fileName = this.getFilename(folderPath)
       this.writeStream = this.getChildProcess(fileName, (err, stdout, stderr) => {
